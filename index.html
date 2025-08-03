@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Test de Temperamentos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Test de Temperamentos</h1>
+    <div id="progress-bar">
+      <div id="progress-fill"></div>
+      <span id="progress-text">Pregunta 1 de 120</span>
+    </div>
+    <div id="question-container">
+      <h2 id="current-question"></h2>
+      <div class="scale-container">
+        <div class="scale-labels">
+          <span class="scale-label">Nunca</span>
+          <span class="scale-label">A veces</span>
+          <span class="scale-label">Frecuentemente</span>
+          <span class="scale-label">Siempre</span>
+        </div>
+        <div class="slider-container">
+          <input type="range" id="answer-slider" min="1" max="4" value="1" step="1">
+          <div class="slider-track">
+            <div class="slider-fill"></div>
+          </div>
+          <div class="slider-values">
+            <span class="value-label" data-value="1">1</span>
+            <span class="value-label" data-value="2">2</span>
+            <span class="value-label" data-value="3">3</span>
+            <span class="value-label" data-value="4">4</span>
+          </div>
+        </div>
+        <div class="current-selection">
+          <span id="selection-text">Nunca</span>
+        </div>
+        <div class="navigation-buttons">
+          <button id="btn-prev" class="prev-btn">← Anterior</button>
+          <button id="btn-next" class="next-btn">Siguiente →</button>
+        </div>
+      </div>
+    </div>
+    <div id="result"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
