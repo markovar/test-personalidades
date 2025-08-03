@@ -34,7 +34,10 @@ jobs:
     - name: Invalidate CloudFront (optional)
       run: |
         if [ ! -z "${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}" ]; then
+          echo "Attempting CloudFront invalidation..."
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/test-personalidades/*"
+            --paths "/test-personalidades/*" || echo "CloudFront invalidation failed - continuing deployment"
+        else
+          echo "No CloudFront distribution ID provided, skipping invalidation"
         fi
