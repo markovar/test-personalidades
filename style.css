@@ -63,18 +63,11 @@ h1 {
   text-align: center;
 }
 
-.scale-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  font-size: 0.9em;
-  color: #666;
-  font-weight: 500;
-}
+/* Eliminados los scale-labels para simplificar la interfaz */
 
 .slider-container {
   position: relative;
-  margin: 30px 0;
+  margin: 20px 0;
 }
 
 #answer-slider {
@@ -117,30 +110,40 @@ h1 {
 .slider-values {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 15px;
   position: relative;
+  gap: 8px;
 }
 
 .value-label {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  min-width: 80px;
+  padding: 8px 12px;
+  border-radius: 20px;
   background: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 0.9em;
+  font-weight: 500;
+  font-size: 0.85em;
   color: #666;
   transition: all 0.3s ease;
   cursor: pointer;
   user-select: none;
+  border: 2px solid transparent;
 }
 
 .value-label.active {
   background: #2196f3;
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.05);
+  border-color: #1976d2;
+  font-weight: bold;
+}
+
+.value-label:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+  border-color: #2196f3;
 }
 
 .current-selection {
@@ -409,5 +412,14 @@ h1 {
   }
   .puntajes-resumen {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .slider-values {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .value-label {
+    min-width: 70px;
+    font-size: 0.8em;
+    padding: 6px 8px;
   }
 }
