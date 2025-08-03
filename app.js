@@ -409,8 +409,11 @@ function calcularPuntajes() {
   puntajes = [0, 0, 0, 0]; // Resetear puntajes
   
   preguntasAleatorias.forEach((preguntaObj, index) => {
-    if (respuestasUsuario[index]) {
-      puntajes[preguntaObj.grupoIdx] += respuestasUsuario[index];
+    // Verificar si existe la respuesta (incluso si es 0)
+    if (respuestasUsuario[index] !== undefined) {
+      // Convertir escala 1-4 a 0-3 para mayor objetividad
+      const puntosNormalizados = respuestasUsuario[index] - 1;
+      puntajes[preguntaObj.grupoIdx] += puntosNormalizados;
     }
   });
 }
@@ -450,8 +453,9 @@ function mostrarResultadoPrincipal() {
       <!-- Resumen de puntajes -->
       <div class="puntajes-resumen">
         ${temperamentosOrdenados.map((temp, idx) => {
-          const puntajeTemperamento = preguntasAleatorias.length / 4; // Preguntas por temperamento
-          const porcentaje = Math.round((temp.puntaje / (puntajeTemperamento * 4)) * 100);
+          const preguntasPorTemperamento = preguntasAleatorias.length / 4; // 30 preguntas por temperamento
+          const puntajeMaximo = preguntasPorTemperamento * 3; // Máximo posible (escala 0-3)
+          const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
           return `
             <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" onclick="mostrarDetalle(${idx})">
               <span class="emoji">${descripciones[temp.animal].emoji}</span>
