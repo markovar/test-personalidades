@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Favicon Generator</title>
+</head>
+<body>
+    <h2>Favicon Generator for Test de Temperamentos</h2>
+    <canvas id="canvas" width="32" height="32" style="border: 1px solid #ccc; transform: scale(8); transform-origin: 0 0;"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Create gradient background
+        const gradient = ctx.createLinearGradient(0, 0, 32, 32);
+        gradient.addColorStop(0, '#4CAF50');
+        gradient.addColorStop(0.33, '#2196F3');
+        gradient.addColorStop(0.66, '#FF9800');
+        gradient.addColorStop(1, '#FF5722');
+        
+        // Background
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 32, 32);
+        
+        // White border
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1, 1, 30, 30);
+        
+        // Brain symbol
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🧠', 16, 16);
+        
+        // Generate PNG
+        const link = document.createElement('a');
+        link.download = 'favicon.png';
+        link.href = canvas.toDataURL();
+        link.click();
+        
+        // Also create a simpler version with just initials
+        ctx.clearRect(0, 0, 32, 32);
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 32, 32);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(1, 1, 30, 30);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('T', 16, 16);
+        
+        const link2 = document.createElement('a');
+        link2.download = 'favicon-simple.png';
+        link2.href = canvas.toDataURL();
+        link2.click();
+    </script>
+</body>
+</html>
