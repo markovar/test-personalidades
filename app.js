@@ -297,6 +297,14 @@ const descripciones = {
   }
 };
 
+// Equivalencias con temperamentos clásicos
+const equivalenciasClasicas = {
+  "León": "Colérico",
+  "Mono": "Sanguíneo",
+  "Labrador": "Flemático",
+  "Castor": "Melancólico"
+};
+
 // Variables del juego
 let preguntasAleatorias = [];
 let preguntaActual = 0;
@@ -448,7 +456,7 @@ function mostrarResultadoPrincipal() {
   resultDiv.innerHTML = `
     <div class="resultado-container">
       <h2>¡Test Completado!</h2>
-      <h3>Tu temperamento dominante es: ${descripciones[ganador.animal].emoji} ${ganador.animal}</h3>
+      <h3>Tu temperamento dominante es: ${descripciones[ganador.animal].emoji} ${ganador.animal} (${equivalenciasClasicas[ganador.animal]})</h3>
       
       <!-- Resumen de puntajes -->
       <div class="puntajes-resumen">
@@ -459,7 +467,7 @@ function mostrarResultadoPrincipal() {
           return `
             <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" onclick="mostrarDetalle(${idx})">
               <span class="emoji">${descripciones[temp.animal].emoji}</span>
-              <span class="nombre">${temp.animal}</span>
+              <span class="nombre">${temp.animal} (${equivalenciasClasicas[temp.animal]})</span>
               <span class="puntos">${temp.puntaje} pts (${porcentaje}%)</span>
               <span class="posicion">${idx === 0 ? '1°' : idx === 1 ? '2°' : idx === 2 ? '3°' : '4°'}</span>
             </div>
@@ -469,6 +477,9 @@ function mostrarResultadoPrincipal() {
       
       <p style="margin: 20px 0; color: #666;">
         Haz clic en cualquier temperamento para ver su descripción detallada
+      </p>
+      <p style="margin: 10px 0; color: #666; font-style: italic;">
+        Las personalidades utilizadas en este test (🦁 León, 🐒 Mono, 🐕 Labrador, 🦫 Castor) corresponden a los cuatro temperamentos clásicos: colérico, sanguíneo, flemático y melancólico, respectivamente.
       </p>
       
       <!-- Detalle del temperamento seleccionado -->
@@ -501,7 +512,7 @@ function generarDetalleTemperamento(indice) {
   return `
     <div class="detalle-card ${indice === 0 ? 'principal' : ''}">
       <div class="detalle-header">
-        <h3>${detalle.emoji} ${detalle.titulo}</h3>
+        <h3>${detalle.emoji} ${detalle.titulo} (${equivalenciasClasicas[temp.animal]})</h3>
         <span class="badge-posicion ${indice === 0 ? 'principal' : ''}">${posiciones[indice]}</span>
         <div class="puntaje-grande">${temp.puntaje} puntos</div>
       </div>
