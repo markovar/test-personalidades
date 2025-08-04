@@ -365,7 +365,7 @@ function mostrarPregunta() {
   // Actualizar barra de progreso
   const progreso = ((preguntaActual + 1) / preguntasAleatorias.length) * 100;
   progressFill.style.width = `${progreso}%`;
-  progressText.textContent = `Pregunta ${preguntaActual + 1} de ${preguntasAleatorias.length}`;
+  progressText.textContent = `${Math.round(progreso)}% completado`;
 }
 
 // Responder pregunta (ir hacia adelante)
