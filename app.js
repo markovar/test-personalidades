@@ -574,7 +574,7 @@ function reiniciarTest() {
 // Función para actualizar la selección visual
 function actualizarSeleccion() {
   const valor = parseInt(answerSlider.value);
-  const textos = ['', 'Nunca', 'A veces', 'Frecuentemente', 'Siempre'];
+  const textos = ['', 'Casi Nunca', 'Rara Vez', 'Frecuentemente', 'Casi Siempre'];
   const colores = ['', '#ff5722', '#ff9800', '#4caf50', '#2196f3']; // Colores correspondientes a la barra
   
   selectionText.textContent = textos[valor];
