@@ -310,7 +310,7 @@ const CONFIG = {
   MIN_VALOR: 1,
   MAX_VALOR: 4,
   ANIMATION_DURATION: 200,
-  DEBUG_MODE: false // Cambiar a true para logs de desarrollo
+  DEBUG_MODE: true // Temporalmente habilitado para debuggear el problema
 };
 
 // Variables del juego
@@ -480,11 +480,28 @@ let temperamentoActualDetalle = 0;
 
 // Mostrar resultado final
 function mostrarResultado() {
-  questionContainer.style.display = 'none';
-  document.getElementById('progress-bar').style.display = 'none';
+  debugLog('Mostrando resultados...');
+  
+  // Ocultar contenedores del test
+  if (questionContainer) {
+    questionContainer.style.display = 'none';
+  }
+  const progressBar = document.getElementById('progress-bar');
+  if (progressBar) {
+    progressBar.style.display = 'none';
+  }
   
   // Calcular puntajes finales basado en todas las respuestas
   calcularPuntajes();
+  
+  // Verificar que tenemos respuestas
+  const totalRespuestas = respuestasUsuario.filter(r => r !== undefined).length;
+  debugLog(`Total de respuestas: ${totalRespuestas}`);
+  
+  if (totalRespuestas === 0) {
+    console.error('No se encontraron respuestas válidas');
+    return;
+  }
   
   // Crear array de temperamentos con puntajes y ordenar por puntaje
   temperamentosOrdenados = temperamentos.map((temp, idx) => ({
@@ -493,16 +510,34 @@ function mostrarResultado() {
     posicion: idx
   })).sort((a, b) => b.puntaje - a.puntaje);
   
+  debugLog('Temperamentos ordenados:', temperamentosOrdenados);
+  
   // Mostrar resultado principal
   mostrarResultadoPrincipal();
-  resultDiv.style.display = 'block';
+  
+  if (resultDiv) {
+    resultDiv.style.display = 'block';
+  }
   
   // Agregar event listeners a los elementos generados dinámicamente
   configurarEventListenersResultados();
+  
+  debugLog('Resultados mostrados correctamente');
 }
 
 function mostrarResultadoPrincipal() {
+  if (!temperamentosOrdenados || temperamentosOrdenados.length === 0) {
+    console.error('No hay temperamentos ordenados para mostrar');
+    return;
+  }
+  
   const ganador = temperamentosOrdenados[0];
+  debugLog('Ganador:', ganador);
+  
+  if (!resultDiv) {
+    console.error('resultDiv no encontrado');
+    return;
+  }
   
   resultDiv.innerHTML = `
     <div class="resultado-container">
@@ -610,31 +645,57 @@ function generarDetalleTemperamento(indice) {
 
 // Reiniciar test
 function reiniciarTest() {
+  // Resetear todas las variables del estado
   preguntaActual = 0;
   puntajes = [0, 0, 0, 0];
   respuestasUsuario = [];
+  preguntasAleatorias = [];
+  temperamentosOrdenados = [];
+  temperamentoActualDetalle = 0;
+  
+  // Limpiar contenido de resultados
+  if (resultDiv) {
+    resultDiv.innerHTML = '';
+    resultDiv.style.display = 'none';
+  }
   
   // Mostrar pantalla de bienvenida nuevamente
-  welcomeScreen.style.display = 'block';
-  testContent.style.display = 'none';
-  resultDiv.style.display = 'none';
+  if (welcomeScreen) {
+    welcomeScreen.style.display = 'block';
+  }
+  if (testContent) {
+    testContent.style.display = 'none';
+  }
+  
+  debugLog('Test reiniciado correctamente');
 }
 
 // Función para configurar event listeners de resultados
 function configurarEventListenersResultados() {
-  // Event listeners para los items de puntaje
-  document.querySelectorAll('.puntaje-item').forEach((item) => {
-    item.addEventListener('click', (e) => {
-      const indice = parseInt(e.currentTarget.dataset.temperamento);
-      mostrarDetalle(indice);
+  // Usar un pequeño delay para asegurar que el DOM esté completamente renderizado
+  setTimeout(() => {
+    // Event listeners para los items de puntaje
+    const puntajeItems = document.querySelectorAll('.puntaje-item');
+    debugLog(`Configurando ${puntajeItems.length} items de puntaje`);
+    
+    puntajeItems.forEach((item) => {
+      item.addEventListener('click', (e) => {
+        const indice = parseInt(e.currentTarget.dataset.temperamento);
+        if (!isNaN(indice)) {
+          mostrarDetalle(indice);
+        }
+      });
     });
-  });
-  
-  // Event listener para el botón de reiniciar
-  const btnReiniciar = document.getElementById('btn-reiniciar');
-  if (btnReiniciar) {
-    btnReiniciar.addEventListener('click', reiniciarTest);
-  }
+    
+    // Event listener para el botón de reiniciar
+    const btnReiniciar = document.getElementById('btn-reiniciar');
+    if (btnReiniciar) {
+      btnReiniciar.addEventListener('click', reiniciarTest);
+      debugLog('Event listener para reiniciar configurado');
+    } else {
+      console.warn('Botón reiniciar no encontrado');
+    }
+  }, 100);
 }
 
 // Función para actualizar la selección visual
