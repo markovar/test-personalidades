@@ -577,9 +577,14 @@ function mostrarResultadoPrincipal() {
         ${generarDetalleTemperamento(0)}
       </div>
       
-      <button id="btn-reiniciar" class="btn-reiniciar">
-        🔄 Hacer test nuevamente
-      </button>
+      <div class="resultado-acciones">
+        <button id="btn-descargar-pdf" class="btn-pdf">
+          📄 Descargar PDF
+        </button>
+        <button id="btn-reiniciar" class="btn-reiniciar">
+          🔄 Hacer test nuevamente
+        </button>
+      </div>
     </div>
   `;
 }
@@ -673,6 +678,157 @@ function reiniciarTest() {
   debugLog('Test reiniciado correctamente');
 }
 
+// Función para generar PDF con los resultados
+function generarPDF() {
+  try {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Configuración del PDF
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 20;
+    
+    // Título principal
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('🌟 Test de Personalidades - Resultados 🌟', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
+    
+    // Fecha
+    const fecha = new Date().toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha: ${fecha}`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 20;
+    
+    // Temperamento dominante
+    const ganador = temperamentosOrdenados[0];
+    const descripcionGanador = descripciones[ganador.animal];
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Tu temperamento dominante es:', pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 10;
+    
+    doc.setFontSize(14);
+    doc.text(`${ganador.animal} (${equivalenciasClasicas[ganador.animal]})`, pageWidth / 2, yPosition, { align: 'center' });
+    yPosition += 15;
+    
+    // Descripción del temperamento dominante
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    const descripcionLineas = doc.splitTextToSize(descripcionGanador.descripcion, pageWidth - 40);
+    doc.text(descripcionLineas, 20, yPosition);
+    yPosition += descripcionLineas.length * 5 + 10;
+    
+    // Ranking de temperamentos
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Ranking de Temperamentos:', 20, yPosition);
+    yPosition += 10;
+    
+    temperamentosOrdenados.forEach((temp, idx) => {
+      const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === temp.posicion).length;
+      const puntajeMaximo = preguntasContestadas * 3;
+      const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
+      const posicion = idx === 0 ? '1°' : idx === 1 ? '2°' : idx === 2 ? '3°' : '4°';
+      
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${posicion} ${temp.animal} (${equivalenciasClasicas[temp.animal]})`, 25, yPosition);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${temp.puntaje} pts (${porcentaje}%)`, pageWidth - 60, yPosition);
+      yPosition += 8;
+    });
+    
+    yPosition += 10;
+    
+    // Características del temperamento dominante
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Características:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    descripcionGanador.caracteristicas.forEach((caracteristica) => {
+      const lineas = doc.splitTextToSize(`• ${caracteristica}`, pageWidth - 40);
+      doc.text(lineas, 25, yPosition);
+      yPosition += lineas.length * 4;
+    });
+    
+    yPosition += 5;
+    
+    // Fortalezas
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Fortalezas:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    descripcionGanador.fortalezas.forEach((fortaleza) => {
+      const lineas = doc.splitTextToSize(`• ${fortaleza}`, pageWidth - 40);
+      doc.text(lineas, 25, yPosition);
+      yPosition += lineas.length * 4;
+    });
+    
+    yPosition += 5;
+    
+    // Áreas de desarrollo
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
+    
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Áreas de desarrollo:', 20, yPosition);
+    yPosition += 8;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    descripcionGanador.desarrollo.forEach((desarrollo) => {
+      const lineas = doc.splitTextToSize(`• ${desarrollo}`, pageWidth - 40);
+      doc.text(lineas, 25, yPosition);
+      yPosition += lineas.length * 4;
+    });
+    
+    // Pie de página
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Test de Personalidades basado en los cuatro temperamentos clásicos', pageWidth / 2, pageHeight - 10, { align: 'center' });
+    
+    // Descargar el PDF
+    const nombreArchivo = `test-personalidades-${ganador.animal.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(nombreArchivo);
+    
+    debugLog('PDF generado correctamente:', nombreArchivo);
+    
+  } catch (error) {
+    console.error('Error al generar PDF:', error);
+    alert('Hubo un error al generar el PDF. Por favor, intenta nuevamente.');
+  }
+}
+
 // Función para configurar event listeners de resultados
 function configurarEventListenersResultados() {
   // Usar un pequeño delay para asegurar que el DOM esté completamente renderizado
@@ -689,6 +845,13 @@ function configurarEventListenersResultados() {
         }
       });
     });
+    
+    // Event listener para el botón de PDF
+    const btnDescargarPDF = document.getElementById('btn-descargar-pdf');
+    if (btnDescargarPDF) {
+      btnDescargarPDF.addEventListener('click', generarPDF);
+      debugLog('Event listener para PDF configurado');
+    }
     
     // Event listener para el botón de reiniciar
     const btnReiniciar = document.getElementById('btn-reiniciar');
