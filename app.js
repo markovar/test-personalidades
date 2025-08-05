@@ -305,6 +305,14 @@ const equivalenciasClasicas = {
   "Castor": "Melancólico"
 };
 
+// Constantes de configuración
+const CONFIG = {
+  MIN_VALOR: 1,
+  MAX_VALOR: 4,
+  ANIMATION_DURATION: 200,
+  DEBUG_MODE: false // Cambiar a true para logs de desarrollo
+};
+
 // Variables del juego
 let preguntasAleatorias = [];
 let preguntaActual = 0;
@@ -315,9 +323,16 @@ let respuestasUsuario = []; // Guardar respuestas para poder navegar hacia atrá
 let welcomeScreen, testContent, btnStartTest, questionContainer, currentQuestionEl;
 let answerSlider, btnNext, btnPrev, selectionText, progressFill, progressText, resultDiv;
 
+// Función para logging condicional
+function debugLog(message, ...args) {
+  if (CONFIG.DEBUG_MODE) {
+    console.log(message, ...args);
+  }
+}
+
 // Función para iniciar el test desde la pantalla de bienvenida
 function iniciarTest() {
-  console.log('Iniciando test...');
+  debugLog('Iniciando test...');
   
   // Verificar que los elementos existan
   if (!welcomeScreen || !testContent) {
@@ -338,7 +353,7 @@ function iniciarTest() {
   mostrarPregunta();
   actualizarSeleccion();
   
-  console.log('Test iniciado correctamente');
+  debugLog('Test iniciado correctamente');
 }
 
 // Función para mezclar array aleatoriamente
@@ -395,12 +410,17 @@ function mostrarPregunta() {
   progressText.textContent = `${Math.round(progreso)}% completado`;
 }
 
+// Función para validar valor de respuesta
+function esValorValido(valor) {
+  return valor >= CONFIG.MIN_VALOR && valor <= CONFIG.MAX_VALOR && !isNaN(valor);
+}
+
 // Responder pregunta (ir hacia adelante)
 function responderPregunta() {
   const valorRespuesta = parseInt(answerSlider.value);
   
-  // Validar que el valor esté en el rango correcto (1-4)
-  if (valorRespuesta < 1 || valorRespuesta > 4 || isNaN(valorRespuesta)) {
+  // Validar que el valor esté en el rango correcto
+  if (!esValorValido(valorRespuesta)) {
     console.error('Valor de respuesta inválido:', valorRespuesta);
     return; // No proceder si el valor es inválido
   }
@@ -416,7 +436,7 @@ function responderPregunta() {
   setTimeout(() => {
     mostrarPregunta();
     questionContainer.style.opacity = '1';
-  }, 200);
+  }, CONFIG.ANIMATION_DURATION);
 }
 
 // Ir a pregunta anterior
@@ -424,7 +444,7 @@ function preguntaAnterior() {
   if (preguntaActual > 0) {
     // Guardar respuesta actual antes de retroceder (con validación)
     const valorActual = parseInt(answerSlider.value);
-    if (valorActual >= 1 && valorActual <= 4 && !isNaN(valorActual)) {
+    if (esValorValido(valorActual)) {
       respuestasUsuario[preguntaActual] = valorActual;
     }
     
@@ -436,7 +456,7 @@ function preguntaAnterior() {
     setTimeout(() => {
       mostrarPregunta();
       questionContainer.style.opacity = '1';
-    }, 200);
+    }, CONFIG.ANIMATION_DURATION);
   }
 }
 
@@ -476,6 +496,9 @@ function mostrarResultado() {
   // Mostrar resultado principal
   mostrarResultadoPrincipal();
   resultDiv.style.display = 'block';
+  
+  // Agregar event listeners a los elementos generados dinámicamente
+  configurarEventListenersResultados();
 }
 
 function mostrarResultadoPrincipal() {
@@ -494,7 +517,7 @@ function mostrarResultadoPrincipal() {
           const puntajeMaximo = preguntasContestadas * 3; // Máximo posible (escala 0-3)
           const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
           return `
-            <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" onclick="mostrarDetalle(${idx})">
+            <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" data-temperamento="${idx}">
               <span class="emoji">${descripciones[temp.animal].emoji}</span>
               <span class="nombre">${temp.animal} (${equivalenciasClasicas[temp.animal]})</span>
               <span class="puntos">${temp.puntaje} pts (${porcentaje}%)</span>
@@ -516,7 +539,7 @@ function mostrarResultadoPrincipal() {
         ${generarDetalleTemperamento(0)}
       </div>
       
-      <button onclick="reiniciarTest()" class="btn-reiniciar">
+      <button id="btn-reiniciar" class="btn-reiniciar">
         🔄 Hacer test nuevamente
       </button>
     </div>
@@ -597,6 +620,23 @@ function reiniciarTest() {
   resultDiv.style.display = 'none';
 }
 
+// Función para configurar event listeners de resultados
+function configurarEventListenersResultados() {
+  // Event listeners para los items de puntaje
+  document.querySelectorAll('.puntaje-item').forEach((item) => {
+    item.addEventListener('click', (e) => {
+      const indice = parseInt(e.currentTarget.dataset.temperamento);
+      mostrarDetalle(indice);
+    });
+  });
+  
+  // Event listener para el botón de reiniciar
+  const btnReiniciar = document.getElementById('btn-reiniciar');
+  if (btnReiniciar) {
+    btnReiniciar.addEventListener('click', reiniciarTest);
+  }
+}
+
 // Función para actualizar la selección visual
 function actualizarSeleccion() {
   const valor = parseInt(answerSlider.value);
@@ -604,18 +644,18 @@ function actualizarSeleccion() {
   const colores = ['', '#ff5722', '#ff9800', '#4caf50', '#2196f3']; // Colores correspondientes a la barra
   
   // Validar que el valor esté en el rango correcto
-  if (valor >= 1 && valor <= 4 && !isNaN(valor)) {
+  if (esValorValido(valor)) {
     selectionText.textContent = textos[valor];
     selectionText.style.color = colores[valor];
   } else {
     // Valor por defecto si hay algún problema
-    selectionText.textContent = textos[1];
-    selectionText.style.color = colores[1];
-    answerSlider.value = 1;
+    selectionText.textContent = textos[CONFIG.MIN_VALOR];
+    selectionText.style.color = colores[CONFIG.MIN_VALOR];
+    answerSlider.value = CONFIG.MIN_VALOR;
   }
   
   // Actualizar círculos de valores  
-  const valorSeguro = (valor >= 1 && valor <= 4 && !isNaN(valor)) ? valor : 1;
+  const valorSeguro = esValorValido(valor) ? valor : CONFIG.MIN_VALOR;
   document.querySelectorAll('.value-label').forEach((label, index) => {
     label.classList.toggle('active', index + 1 === valorSeguro);
   });
@@ -624,7 +664,7 @@ function actualizarSeleccion() {
 // Función para hacer clic en los números
 function clickearValor(valor) {
   // Validar que el valor sea válido antes de asignar
-  if (valor >= 1 && valor <= 4) {
+  if (esValorValido(valor)) {
     answerSlider.value = valor;
     actualizarSeleccion();
   }
@@ -674,7 +714,7 @@ function inicializarApp() {
     }
   });
 
-  console.log('Aplicación inicializada correctamente');
+  debugLog('Aplicación inicializada correctamente');
 }
 
 // Inicializar cuando el DOM esté completamente cargado
