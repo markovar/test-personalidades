@@ -310,7 +310,7 @@ const CONFIG = {
   MIN_VALOR: 1,
   MAX_VALOR: 4,
   ANIMATION_DURATION: 200,
-  DEBUG_MODE: true // Temporalmente habilitado para debuggear el problema
+  DEBUG_MODE: false // Modo debug desactivado
 };
 
 // Variables del juego
@@ -515,8 +515,11 @@ function mostrarResultado() {
   // Mostrar resultado principal
   mostrarResultadoPrincipal();
   
+  // Asegurar que el div de resultados sea visible
   if (resultDiv) {
     resultDiv.style.display = 'block';
+    // Forzar un reflow para asegurar que el contenido se renderice
+    resultDiv.offsetHeight;
   }
   
   // Agregar event listeners a los elementos generados dinámicamente
