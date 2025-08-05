@@ -311,22 +311,20 @@ let preguntaActual = 0;
 let puntajes = [0, 0, 0, 0]; // León, Mono, Labrador, Castor
 let respuestasUsuario = []; // Guardar respuestas para poder navegar hacia atrás
 
-// Elementos del DOM
-const welcomeScreen = document.getElementById('welcome-screen');
-const testContent = document.getElementById('test-content');
-const btnStartTest = document.getElementById('btn-start-test');
-const questionContainer = document.getElementById('question-container');
-const currentQuestionEl = document.getElementById('current-question');
-const answerSlider = document.getElementById('answer-slider');
-const btnNext = document.getElementById('btn-next');
-const btnPrev = document.getElementById('btn-prev');
-const selectionText = document.getElementById('selection-text');
-const progressFill = document.getElementById('progress-fill');
-const progressText = document.getElementById('progress-text');
-const resultDiv = document.getElementById('result');
+// Elementos del DOM (se inicializan cuando el DOM esté listo)
+let welcomeScreen, testContent, btnStartTest, questionContainer, currentQuestionEl;
+let answerSlider, btnNext, btnPrev, selectionText, progressFill, progressText, resultDiv;
 
 // Función para iniciar el test desde la pantalla de bienvenida
 function iniciarTest() {
+  console.log('Iniciando test...');
+  
+  // Verificar que los elementos existan
+  if (!welcomeScreen || !testContent) {
+    console.error('Error: elementos del DOM no encontrados');
+    return;
+  }
+  
   // Ocultar pantalla de bienvenida
   welcomeScreen.style.display = 'none';
   
@@ -339,6 +337,8 @@ function iniciarTest() {
   // Mostrar primera pregunta
   mostrarPregunta();
   actualizarSeleccion();
+  
+  console.log('Test iniciado correctamente');
 }
 
 // Función para mezclar array aleatoriamente
@@ -630,27 +630,52 @@ function clickearValor(valor) {
   }
 }
 
-// Event listeners
-btnStartTest.addEventListener('click', iniciarTest);
-btnNext.addEventListener('click', responderPregunta);
-btnPrev.addEventListener('click', preguntaAnterior);
-answerSlider.addEventListener('input', actualizarSeleccion);
+// Función para inicializar todos los elementos del DOM y event listeners
+function inicializarApp() {
+  // Obtener referencias a los elementos del DOM
+  welcomeScreen = document.getElementById('welcome-screen');
+  testContent = document.getElementById('test-content');
+  btnStartTest = document.getElementById('btn-start-test');
+  questionContainer = document.getElementById('question-container');
+  currentQuestionEl = document.getElementById('current-question');
+  answerSlider = document.getElementById('answer-slider');
+  btnNext = document.getElementById('btn-next');
+  btnPrev = document.getElementById('btn-prev');
+  selectionText = document.getElementById('selection-text');
+  progressFill = document.getElementById('progress-fill');
+  progressText = document.getElementById('progress-text');
+  resultDiv = document.getElementById('result');
 
-// Agregar event listeners a los números
-document.querySelectorAll('.value-label').forEach((label, index) => {
-  label.addEventListener('click', () => clickearValor(index + 1));
-});
-
-// Permitir avanzar con Enter
-document.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    if (welcomeScreen.style.display !== 'none') {
-      iniciarTest();
-    } else if (testContent.style.display !== 'none' && questionContainer.style.display !== 'none') {
-      responderPregunta();
-    }
+  // Verificar que todos los elementos existen
+  if (!welcomeScreen || !testContent || !btnStartTest) {
+    console.error('Error: No se pudieron encontrar elementos esenciales del DOM');
+    return;
   }
-});
 
-// Inicialización: mostrar pantalla de bienvenida
-// (El test se inicializa cuando el usuario hace clic en "Comenzar Test")
+  // Event listeners
+  btnStartTest.addEventListener('click', iniciarTest);
+  btnNext.addEventListener('click', responderPregunta);
+  btnPrev.addEventListener('click', preguntaAnterior);
+  answerSlider.addEventListener('input', actualizarSeleccion);
+
+  // Agregar event listeners a los números
+  document.querySelectorAll('.value-label').forEach((label, index) => {
+    label.addEventListener('click', () => clickearValor(index + 1));
+  });
+
+  // Permitir avanzar con Enter
+  document.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      if (welcomeScreen.style.display !== 'none') {
+        iniciarTest();
+      } else if (testContent.style.display !== 'none' && questionContainer.style.display !== 'none') {
+        responderPregunta();
+      }
+    }
+  });
+
+  console.log('Aplicación inicializada correctamente');
+}
+
+// Inicializar cuando el DOM esté completamente cargado
+document.addEventListener('DOMContentLoaded', inicializarApp);
