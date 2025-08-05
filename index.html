@@ -15,11 +15,45 @@
 </head>
 <body>
   <div class="container">
-    <h1>Test de Personalidades</h1>
-    <div id="progress-bar">
-      <div id="progress-fill"></div>
-      <span id="progress-text">1% completado</span>
+    <!-- Pantalla de Bienvenida -->
+    <div id="welcome-screen">
+      <div class="welcome-content">
+        <h1>🌟 Test de Personalidades 🌟</h1>
+        <div class="animals-preview">
+          <span class="animal-emoji">🦁</span>
+          <span class="animal-emoji">🐒</span>
+          <span class="animal-emoji">🐕</span>
+          <span class="animal-emoji">🦫</span>
+        </div>
+        <h2>Descubre tu temperamento dominante</h2>
+        <div class="welcome-description">
+          <p>¿Eres un <strong>León</strong> decidido, un <strong>Mono</strong> espontáneo, un <strong>Labrador</strong> leal o un <strong>Castor</strong> perfeccionista?</p>
+          <p>Este test te ayudará a identificar tu personalidad dominante basada en los cuatro temperamentos clásicos.</p>
+        </div>
+        <div class="test-info">
+          <div class="info-item">
+            ⏱️ <strong>Tiempo estimado:</strong> 10-15 minutos
+          </div>
+          <div class="info-item">
+            📊 <strong>Responde honestamente</strong> para obtener resultados precisos
+          </div>
+          <div class="info-item">
+            🔄 <strong>Puedes navegar</strong> entre preguntas si necesitas cambiar alguna respuesta
+          </div>
+        </div>
+        <button id="btn-start-test" class="start-btn">
+          🚀 Comenzar Test
+        </button>
+      </div>
     </div>
+
+    <!-- Contenido del Test (inicialmente oculto) -->
+    <div id="test-content" style="display: none;">
+      <h1>Test de Personalidades</h1>
+      <div id="progress-bar">
+        <div id="progress-fill"></div>
+        <span id="progress-text">1% completado</span>
+      </div>
     <div id="question-container">
       <h2 id="current-question"></h2>
       <div class="scale-container">
@@ -45,6 +79,7 @@
       </div>
     </div>
     <div id="result"></div>
+    </div>
   </div>
   <script src="/test-personalidades/app.js"></script>
 </body>

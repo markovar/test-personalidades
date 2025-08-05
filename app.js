@@ -312,6 +312,9 @@ let puntajes = [0, 0, 0, 0]; // León, Mono, Labrador, Castor
 let respuestasUsuario = []; // Guardar respuestas para poder navegar hacia atrás
 
 // Elementos del DOM
+const welcomeScreen = document.getElementById('welcome-screen');
+const testContent = document.getElementById('test-content');
+const btnStartTest = document.getElementById('btn-start-test');
 const questionContainer = document.getElementById('question-container');
 const currentQuestionEl = document.getElementById('current-question');
 const answerSlider = document.getElementById('answer-slider');
@@ -321,6 +324,22 @@ const selectionText = document.getElementById('selection-text');
 const progressFill = document.getElementById('progress-fill');
 const progressText = document.getElementById('progress-text');
 const resultDiv = document.getElementById('result');
+
+// Función para iniciar el test desde la pantalla de bienvenida
+function iniciarTest() {
+  // Ocultar pantalla de bienvenida
+  welcomeScreen.style.display = 'none';
+  
+  // Mostrar contenido del test
+  testContent.style.display = 'block';
+  
+  // Generar preguntas aleatorias
+  preguntasAleatorias = crearPreguntasAleatorias();
+  
+  // Mostrar primera pregunta
+  mostrarPregunta();
+  actualizarSeleccion();
+}
 
 // Función para mezclar array aleatoriamente
 function shuffleArray(array) {
@@ -380,6 +399,12 @@ function mostrarPregunta() {
 function responderPregunta() {
   const valorRespuesta = parseInt(answerSlider.value);
   
+  // Validar que el valor esté en el rango correcto (1-4)
+  if (valorRespuesta < 1 || valorRespuesta > 4 || isNaN(valorRespuesta)) {
+    console.error('Valor de respuesta inválido:', valorRespuesta);
+    return; // No proceder si el valor es inválido
+  }
+  
   // Guardar respuesta actual
   respuestasUsuario[preguntaActual] = valorRespuesta;
   
@@ -397,8 +422,11 @@ function responderPregunta() {
 // Ir a pregunta anterior
 function preguntaAnterior() {
   if (preguntaActual > 0) {
-    // Guardar respuesta actual antes de retroceder
-    respuestasUsuario[preguntaActual] = parseInt(answerSlider.value);
+    // Guardar respuesta actual antes de retroceder (con validación)
+    const valorActual = parseInt(answerSlider.value);
+    if (valorActual >= 1 && valorActual <= 4 && !isNaN(valorActual)) {
+      respuestasUsuario[preguntaActual] = valorActual;
+    }
     
     // Retroceder una pregunta
     preguntaActual--;
@@ -461,8 +489,9 @@ function mostrarResultadoPrincipal() {
       <!-- Resumen de puntajes -->
       <div class="puntajes-resumen">
         ${temperamentosOrdenados.map((temp, idx) => {
-          const preguntasPorTemperamento = preguntasAleatorias.length / 4; // 30 preguntas por temperamento
-          const puntajeMaximo = preguntasPorTemperamento * 3; // Máximo posible (escala 0-3)
+          // Calcular el número real de preguntas CONTESTADAS para este temperamento
+          const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === temp.posicion).length;
+          const puntajeMaximo = preguntasContestadas * 3; // Máximo posible (escala 0-3)
           const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
           return `
             <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" onclick="mostrarDetalle(${idx})">
@@ -561,14 +590,11 @@ function reiniciarTest() {
   preguntaActual = 0;
   puntajes = [0, 0, 0, 0];
   respuestasUsuario = [];
-  preguntasAleatorias = crearPreguntasAleatorias();
   
-  questionContainer.style.display = 'block';
-  document.getElementById('progress-bar').style.display = 'block';
+  // Mostrar pantalla de bienvenida nuevamente
+  welcomeScreen.style.display = 'block';
+  testContent.style.display = 'none';
   resultDiv.style.display = 'none';
-  
-  mostrarPregunta();
-  actualizarSeleccion();
 }
 
 // Función para actualizar la selección visual
@@ -577,22 +603,35 @@ function actualizarSeleccion() {
   const textos = ['', 'Casi Nunca', 'Rara Vez', 'Frecuentemente', 'Casi Siempre'];
   const colores = ['', '#ff5722', '#ff9800', '#4caf50', '#2196f3']; // Colores correspondientes a la barra
   
-  selectionText.textContent = textos[valor];
-  selectionText.style.color = colores[valor];
+  // Validar que el valor esté en el rango correcto
+  if (valor >= 1 && valor <= 4 && !isNaN(valor)) {
+    selectionText.textContent = textos[valor];
+    selectionText.style.color = colores[valor];
+  } else {
+    // Valor por defecto si hay algún problema
+    selectionText.textContent = textos[1];
+    selectionText.style.color = colores[1];
+    answerSlider.value = 1;
+  }
   
-  // Actualizar círculos de valores
+  // Actualizar círculos de valores  
+  const valorSeguro = (valor >= 1 && valor <= 4 && !isNaN(valor)) ? valor : 1;
   document.querySelectorAll('.value-label').forEach((label, index) => {
-    label.classList.toggle('active', index + 1 === valor);
+    label.classList.toggle('active', index + 1 === valorSeguro);
   });
 }
 
 // Función para hacer clic en los números
 function clickearValor(valor) {
-  answerSlider.value = valor;
-  actualizarSeleccion();
+  // Validar que el valor sea válido antes de asignar
+  if (valor >= 1 && valor <= 4) {
+    answerSlider.value = valor;
+    actualizarSeleccion();
+  }
 }
 
 // Event listeners
+btnStartTest.addEventListener('click', iniciarTest);
 btnNext.addEventListener('click', responderPregunta);
 btnPrev.addEventListener('click', preguntaAnterior);
 answerSlider.addEventListener('input', actualizarSeleccion);
@@ -604,12 +643,14 @@ document.querySelectorAll('.value-label').forEach((label, index) => {
 
 // Permitir avanzar con Enter
 document.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter' && questionContainer.style.display !== 'none') {
-    responderPregunta();
+  if (e.key === 'Enter') {
+    if (welcomeScreen.style.display !== 'none') {
+      iniciarTest();
+    } else if (testContent.style.display !== 'none' && questionContainer.style.display !== 'none') {
+      responderPregunta();
+    }
   }
 });
 
-// Inicializar el test
-preguntasAleatorias = crearPreguntasAleatorias();
-mostrarPregunta();
-actualizarSeleccion();
+// Inicialización: mostrar pantalla de bienvenida
+// (El test se inicializa cuando el usuario hace clic en "Comenzar Test")
