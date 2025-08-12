@@ -310,7 +310,7 @@ const CONFIG = {
   MIN_VALOR: 1,
   MAX_VALOR: 4,
   ANIMATION_DURATION: 200,
-  DEBUG_MODE: false // Modo debug desactivado
+  DEBUG_MODE: true // Habilitado temporalmente para diagnosticar magic links
 };
 
 // Variables del juego
@@ -1107,7 +1107,9 @@ function mostrarInfoPersonalidades() {
 }
 
 // Enrutado por query params (magic links)
+let __magicProcessed = false;
 function procesarMagicLinks() {
+  if (__magicProcessed) return;
   const params = new URLSearchParams(window.location.search);
   const vista = params.get('view');
   if (vista === 'descriptions') {
@@ -1120,36 +1122,50 @@ function procesarMagicLinks() {
   }
   // Puntuaciones compartibles: view=scores&scores=leon:30,mono:12,labrador:5,castor:3
   if (vista === 'scores') {
-    const raw = params.get('scores');
-    if (raw) {
-      // Normalizar claves: quitar acentos y minúsculas
-      const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-      // Permitir separadores ',' o '%2C' ya decodificados por URLSearchParams
-      const parts = raw.split(',');
-      const map = Object.fromEntries(parts.map(p => p.split(':')));
-      const mapNormalized = {};
-      Object.keys(map).forEach((k) => { mapNormalized[normalizeKey(k)] = Number(map[k]); });
-      // Construir estructura temporaria de puntajes
-      const orden = ['León','Mono','Labrador','Castor'];
-      temperamentosOrdenados = orden.map((animal, idx) => ({
-        ...temperamentos[idx],
-        animal,
-        puntaje: Number(mapNormalized[normalizeKey(animal)] || 0),
-        posicion: idx
-      })).sort((a,b)=>b.puntaje-a.puntaje);
-      // Limpiar UI y mostrar resultado sintético
-      if (welcomeScreen) welcomeScreen.style.display = 'none';
-      if (testContent) testContent.style.display = 'none';
-      if (resultDiv) resultDiv.style.display = 'block';
-      // Asegurar estructura mínima para render (aunque no haya preguntas)
-      preguntasAleatorias = temperamentos.flatMap((t, idx) => [{ grupoIdx: idx }]);
-      mostrarResultadoPrincipal();
-      configurarEventListenersResultados();
-      // Seleccionar detalle si viene en URL
-      const det = params.get('detail');
-      if (det) {
-        const idx = temperamentosOrdenados.findIndex(t => normalizeKey(t.animal) === normalizeKey(det));
-        if (idx >= 0) { mostrarDetalle(idx); }
+    try {
+      const raw = params.get('scores');
+      if (raw) {
+        const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        // Soportar formatos antiguos ("," y ":") y nuevos ("." y "-")
+        const pairSep = raw.includes('.') ? '.' : ',';
+        const kvSep = raw.includes('-') ? '-' : ':';
+        const parts = raw.split(pairSep).map(x=>x.trim()).filter(Boolean);
+        const map = Object.fromEntries(parts.map(p => {
+          const [k,v] = p.split(kvSep);
+          return [k, v];
+        }));
+        const mapNormalized = {};
+        Object.keys(map).forEach((k) => { mapNormalized[normalizeKey(k)] = Number(map[k]); });
+        const orden = ['León','Mono','Labrador','Castor'];
+        temperamentosOrdenados = orden.map((animal, idx) => ({
+          ...temperamentos[idx],
+          animal,
+          puntaje: Number(mapNormalized[normalizeKey(animal)] || 0),
+          posicion: idx
+        })).sort((a,b)=>b.puntaje-a.puntaje);
+        // Mostrar
+        if (welcomeScreen) welcomeScreen.style.display = 'none';
+        if (testContent) testContent.style.display = 'none';
+        if (resultDiv) {
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = '<div style="font:12px/1.4 system-ui;color:#666;">Cargando resultado compartido...</div>';
+        }
+        // Estructura mínima para porcentajes absolutos
+        preguntasAleatorias = temperamentos.flatMap((t, idx) => [{ grupoIdx: idx }]);
+        mostrarResultadoPrincipal();
+        configurarEventListenersResultados();
+        const det = params.get('detail');
+        if (det) {
+          const idx = temperamentosOrdenados.findIndex(t => normalizeKey(t.animal) === normalizeKey(det));
+          if (idx >= 0) { mostrarDetalle(idx); }
+        }
+        __magicProcessed = true;
+      }
+    } catch (err) {
+      console.error('Error procesando magic link scores:', err);
+      if (resultDiv) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '<div style="color:#c00">Error cargando resultado compartido.</div>';
       }
     }
   }
@@ -1168,8 +1184,9 @@ function construirUrlResultados({ detalleAnimal } = {}) {
     const encontrado = temperamentosOrdenados.find(t => t.animal === animal);
     const val = encontrado ? encontrado.puntaje : 0;
     const key = animal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    return `${key}:${val}`;
-  }).join(',');
+    // Formato limpio: pares con "-" y separados por "." (evita %3A y %2C)
+    return `${key}-${val}`;
+  }).join('.');
   url.searchParams.set('scores', scores);
   if (detalleAnimal) {
     const det = detalleAnimal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
