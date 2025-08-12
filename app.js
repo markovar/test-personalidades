@@ -1118,13 +1118,17 @@ function procesarMagicLinks() {
   if (vista === 'scores') {
     const raw = params.get('scores');
     if (raw) {
+      // Normalizar claves: quitar acentos y minúsculas
+      const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       const map = Object.fromEntries(raw.split(',').map(p => p.split(':')));
+      const mapNormalized = {};
+      Object.keys(map).forEach((k) => { mapNormalized[normalizeKey(decodeURIComponent(k))] = Number(map[k]); });
       // Construir estructura temporaria de puntajes
       const orden = ['León','Mono','Labrador','Castor'];
       temperamentosOrdenados = orden.map((animal, idx) => ({
         ...temperamentos[idx],
         animal,
-        puntaje: Number(map[animal.toLowerCase()] || 0),
+        puntaje: Number(mapNormalized[normalizeKey(animal)] || 0),
         posicion: idx
       })).sort((a,b)=>b.puntaje-a.puntaje);
       // Limpiar UI y mostrar resultado sintético
@@ -1137,7 +1141,7 @@ function procesarMagicLinks() {
       // Seleccionar detalle si viene en URL
       const det = params.get('detail');
       if (det) {
-        const idx = temperamentosOrdenados.findIndex(t => t.animal.toLowerCase() === det.toLowerCase());
+        const idx = temperamentosOrdenados.findIndex(t => normalizeKey(t.animal) === normalizeKey(det));
         if (idx >= 0) { mostrarDetalle(idx); }
       }
     }
@@ -1145,6 +1149,11 @@ function procesarMagicLinks() {
 }
 
 document.addEventListener('DOMContentLoaded', procesarMagicLinks);
+// Garantizar procesamiento también tras la inicialización
+document.addEventListener('DOMContentLoaded', () => {
+  // Si ya se inicializó la app, procesar posibles magic links inmediatamente
+  try { procesarMagicLinks(); } catch (e) { /* noop */ }
+});
 
 // Helpers para construir/actualizar URLs de resultados
 function construirUrlResultados({ detalleAnimal } = {}) {
@@ -1156,11 +1165,13 @@ function construirUrlResultados({ detalleAnimal } = {}) {
     // encontrar puntaje por animal en el arreglo ordenado o por índice original
     const encontrado = temperamentosOrdenados.find(t => t.animal === animal);
     const val = encontrado ? encontrado.puntaje : 0;
-    return `${animal.toLowerCase()}:${val}`;
+    const key = animal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return `${key}:${val}`;
   }).join(',');
   url.searchParams.set('scores', scores);
   if (detalleAnimal) {
-    url.searchParams.set('detail', detalleAnimal.toLowerCase());
+    const det = detalleAnimal.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    url.searchParams.set('detail', det);
   } else {
     url.searchParams.delete('detail');
   }
