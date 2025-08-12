@@ -323,6 +323,7 @@ let respuestasUsuario = []; // Guardar respuestas para poder navegar hacia atrá
 let welcomeScreen, testContent, btnStartTest, questionContainer, currentQuestionEl;
 let answerSlider, btnNext, btnPrev, selectionText, progressFill, progressText, resultDiv;
 let infoModal, btnInfo, btnCloseInfo, infoModalBody;
+let IS_SHARE_VIEW = false;
 
 // Función para logging condicional
 function debugLog(message, ...args) {
@@ -333,6 +334,7 @@ function debugLog(message, ...args) {
 
 // Función para iniciar el test desde la pantalla de bienvenida
 function iniciarTest() {
+  if (IS_SHARE_VIEW) { return; }
   debugLog('Iniciando test...');
   
   // Verificar que los elementos existan
@@ -1122,6 +1124,7 @@ function procesarMagicLinks() {
   }
   // Puntuaciones compartibles: view=scores&scores=leon:30,mono:12,labrador:5,castor:3
   if (vista === 'scores') {
+    IS_SHARE_VIEW = true;
     try {
       const raw = params.get('scores');
       if (raw) {
@@ -1160,6 +1163,16 @@ function procesarMagicLinks() {
           if (idx >= 0) { mostrarDetalle(idx); }
         }
         __magicProcessed = true;
+        // Refuerzo de visibilidad para evitar parpadeo por cualquier otro handler tardío
+        const enforce = () => {
+          if (welcomeScreen) welcomeScreen.style.display = 'none';
+          if (testContent) testContent.style.display = 'none';
+          if (resultDiv) resultDiv.style.display = 'block';
+        };
+        enforce();
+        requestAnimationFrame(() => enforce());
+        setTimeout(enforce, 150);
+        setTimeout(enforce, 400);
       }
     } catch (err) {
       console.error('Error procesando magic link scores:', err);
