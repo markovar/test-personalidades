@@ -17,7 +17,16 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <!-- Chart.js para gráficos -->
   <script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
+  <script>
+    // Redirección rápida si viene un magic link de resultados
+    (function(){
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('view') === 'scores' && params.get('scores')) {
+        window.location.replace('/test-personalidades/result.html' + window.location.search);
+      }
+    })();
+  </script>
+  </head>
 <body>
   <div class="container">
     <!-- Pantalla de Bienvenida -->
