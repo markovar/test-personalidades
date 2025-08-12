@@ -528,6 +528,9 @@ function mostrarResultado() {
   // Agregar event listeners a los elementos generados dinámicamente
   configurarEventListenersResultados();
   
+  // Actualizar URL con magic link de resultados (replace para no duplicar historial)
+  actualizarUrlResultados({ push: false, detalleAnimal: temperamentosOrdenados[0].animal });
+
   debugLog('Resultados mostrados correctamente');
 }
 
@@ -588,6 +591,9 @@ function mostrarResultadoPrincipal() {
       </div>
       
       <div class="resultado-acciones">
+        <button id="btn-copy-result-link" class="share-btn">
+          🔗 Copiar enlace a resultado
+        </button>
         <button id="btn-descargar-pdf" class="btn-pdf">
           📄 Descargar PDF
         </button>
@@ -656,6 +662,9 @@ function mostrarDetalle(indice) {
   document.querySelectorAll('.puntaje-item').forEach((item, idx) => {
     item.classList.toggle('seleccionado', idx === indice);
   });
+
+  // Actualizar URL con detalle seleccionado (push state)
+  actualizarUrlResultados({ push: true, detalleAnimal: temperamentosOrdenados[indice].animal });
 }
 
 function generarDetalleTemperamento(indice) {
@@ -743,138 +752,130 @@ function generarPDF() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
-    // Configuración del PDF
+    // Configuración del PDF y helpers
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     let yPosition = 20;
+
+    const marginX = 18;
+    const contentWidth = pageWidth - marginX * 2;
+    const addTitle = (text) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(18);
+      doc.text(text, pageWidth / 2, yPosition, { align: 'center' });
+      yPosition += 12;
+    };
+    const addSubTitle = (text) => {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(text, marginX, yPosition);
+      yPosition += 8;
+    };
+    const addText = (text, size = 10, leading = 5) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(text, contentWidth);
+      doc.text(lines, marginX, yPosition);
+      yPosition += lines.length * leading;
+    };
+    const ensureSpace = (need = 20) => {
+      if (yPosition + need > pageHeight - 15) {
+        doc.addPage();
+        yPosition = 20;
+      }
+    };
     
-    // Título principal
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    doc.text('🌟 Test de Personalidades - Resultados 🌟', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+    // Título principal (sin emojis para compatibilidad)
+    addTitle('Test de Personalidades - Resultados');
+    yPosition += 3;
     
     // Fecha
-    const fecha = new Date().toLocaleDateString('es-ES', {
+    const fecha = new Date().toLocaleString('es-ES', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     });
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Fecha: ${fecha}`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 20;
+    addText(`Fecha: ${fecha}`, 9, 5);
+    yPosition += 5;
     
     // Temperamento dominante
     const ganador = temperamentosOrdenados[0];
     const descripcionGanador = descripciones[ganador.animal];
     
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Tu temperamento dominante es:', pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 10;
-    
-    doc.setFontSize(14);
-    doc.text(`${ganador.animal} (${equivalenciasClasicas[ganador.animal]})`, pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 15;
+    addSubTitle('Tu temperamento dominante es:');
+    addText(`${ganador.animal} (${equivalenciasClasicas[ganador.animal]})`, 12, 6);
+    yPosition += 3;
     
     // Descripción del temperamento dominante
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    const descripcionLineas = doc.splitTextToSize(descripcionGanador.descripcion, pageWidth - 40);
-    doc.text(descripcionLineas, 20, yPosition);
-    yPosition += descripcionLineas.length * 5 + 10;
+    addText(descripcionGanador.descripcion, 10, 5);
+    yPosition += 6;
     
     // Ranking de temperamentos
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Ranking de Temperamentos:', 20, yPosition);
-    yPosition += 10;
+    addSubTitle('Ranking de temperamentos');
+    ensureSpace(30);
     
     temperamentosOrdenados.forEach((temp, idx) => {
       const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === temp.posicion).length;
       const puntajeMaximo = preguntasContestadas * 3;
       const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
       const posicion = idx === 0 ? '1°' : idx === 1 ? '2°' : idx === 2 ? '3°' : '4°';
-      
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`${posicion} ${temp.animal} (${equivalenciasClasicas[temp.animal]})`, 25, yPosition);
-      
-      doc.setFont('helvetica', 'normal');
-      doc.text(`${temp.puntaje} pts (${porcentaje}%)`, pageWidth - 60, yPosition);
-      yPosition += 8;
+      addText(`${posicion} ${temp.animal} (${equivalenciasClasicas[temp.animal]}) — ${temp.puntaje} pts (${porcentaje}%)`, 10, 6);
+      ensureSpace(10);
     });
     
     yPosition += 10;
     
-    // Características del temperamento dominante
-    if (yPosition > pageHeight - 60) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Características:', 20, yPosition);
-    yPosition += 8;
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    // Sección breve del dominante
+    addSubTitle('Características del dominante');
     descripcionGanador.caracteristicas.forEach((caracteristica) => {
-      const lineas = doc.splitTextToSize(`• ${caracteristica}`, pageWidth - 40);
-      doc.text(lineas, 25, yPosition);
-      yPosition += lineas.length * 4;
+      ensureSpace(8);
+      addText(`• ${caracteristica}`, 9, 5);
     });
-    
-    yPosition += 5;
-    
-    // Fortalezas
-    if (yPosition > pageHeight - 60) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Fortalezas:', 20, yPosition);
-    yPosition += 8;
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    yPosition += 4;
+    addSubTitle('Fortalezas');
     descripcionGanador.fortalezas.forEach((fortaleza) => {
-      const lineas = doc.splitTextToSize(`• ${fortaleza}`, pageWidth - 40);
-      doc.text(lineas, 25, yPosition);
-      yPosition += lineas.length * 4;
+      ensureSpace(8);
+      addText(`• ${fortaleza}`, 9, 5);
     });
-    
-    yPosition += 5;
-    
-    // Áreas de desarrollo
-    if (yPosition > pageHeight - 60) {
-      doc.addPage();
-      yPosition = 20;
-    }
-    
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Áreas de desarrollo:', 20, yPosition);
-    yPosition += 8;
-    
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    yPosition += 4;
+    addSubTitle('Áreas de desarrollo');
     descripcionGanador.desarrollo.forEach((desarrollo) => {
-      const lineas = doc.splitTextToSize(`• ${desarrollo}`, pageWidth - 40);
-      doc.text(lineas, 25, yPosition);
-      yPosition += lineas.length * 4;
+      ensureSpace(8);
+      addText(`• ${desarrollo}`, 9, 5);
     });
     
     // Pie de página
-    doc.setFontSize(8);
+    ensureSpace(20);
     doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
     doc.text('Test de Personalidades basado en los cuatro temperamentos clásicos', pageWidth / 2, pageHeight - 10, { align: 'center' });
+    
+    // Nueva página: detalle completo de las 4 personalidades
+    doc.addPage();
+    yPosition = 20;
+    addTitle('Descripciones completas');
+    yPosition += 4;
+    Object.keys(descripciones).forEach((animal, idx) => {
+      const d = descripciones[animal];
+      addSubTitle(`${d.titulo} (${equivalenciasClasicas[animal]})`);
+      addText(d.descripcion, 10, 5);
+      yPosition += 2;
+      addSubTitle('Características');
+      d.caracteristicas.forEach((i) => { ensureSpace(8); addText(`• ${i}`, 9, 5); });
+      yPosition += 2;
+      addSubTitle('Fortalezas');
+      d.fortalezas.forEach((i) => { ensureSpace(8); addText(`• ${i}`, 9, 5); });
+      yPosition += 2;
+      addSubTitle('Debilidades');
+      d.debilidades.forEach((i) => { ensureSpace(8); addText(`• ${i}`, 9, 5); });
+      yPosition += 2;
+      addSubTitle('Debe aprender/desarrollar');
+      d.desarrollo.forEach((i) => { ensureSpace(8); addText(`• ${i}`, 9, 5); });
+      yPosition += 6;
+      ensureSpace(30);
+    });
     
     // Descargar el PDF
     const nombreArchivo = `test-personalidades-${ganador.animal.toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
@@ -910,6 +911,15 @@ function configurarEventListenersResultados() {
     if (btnDescargarPDF) {
       btnDescargarPDF.addEventListener('click', generarPDF);
       debugLog('Event listener para PDF configurado');
+    }
+
+    // Event listener para copiar magic link del resultado
+    const btnCopyResultLink = document.getElementById('btn-copy-result-link');
+    if (btnCopyResultLink) {
+      btnCopyResultLink.addEventListener('click', async () => {
+        const link = construirUrlResultados({ detalleAnimal: temperamentosOrdenados[temperamentoActualDetalle]?.animal });
+        try { await navigator.clipboard.writeText(link); btnCopyResultLink.textContent = '✅ Enlace copiado'; setTimeout(()=>btnCopyResultLink.textContent='🔗 Copiar enlace a resultado', 1800);} catch { alert(link); }
+      });
     }
     
     // Event listener para el botón de reiniciar
@@ -1124,8 +1134,49 @@ function procesarMagicLinks() {
       preguntasAleatorias = []; // para evitar cálculos de absolutos
       mostrarResultadoPrincipal();
       configurarEventListenersResultados();
+      // Seleccionar detalle si viene en URL
+      const det = params.get('detail');
+      if (det) {
+        const idx = temperamentosOrdenados.findIndex(t => t.animal.toLowerCase() === det.toLowerCase());
+        if (idx >= 0) { mostrarDetalle(idx); }
+      }
     }
   }
 }
 
 document.addEventListener('DOMContentLoaded', procesarMagicLinks);
+
+// Helpers para construir/actualizar URLs de resultados
+function construirUrlResultados({ detalleAnimal } = {}) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('view', 'scores');
+  // construir scores desde estado actual
+  const orden = ['León','Mono','Labrador','Castor'];
+  const scores = orden.map((animal, idx) => {
+    // encontrar puntaje por animal en el arreglo ordenado o por índice original
+    const encontrado = temperamentosOrdenados.find(t => t.animal === animal);
+    const val = encontrado ? encontrado.puntaje : 0;
+    return `${animal.toLowerCase()}:${val}`;
+  }).join(',');
+  url.searchParams.set('scores', scores);
+  if (detalleAnimal) {
+    url.searchParams.set('detail', detalleAnimal.toLowerCase());
+  } else {
+    url.searchParams.delete('detail');
+  }
+  return url.toString();
+}
+
+function actualizarUrlResultados({ push = false, detalleAnimal } = {}) {
+  const newUrl = construirUrlResultados({ detalleAnimal });
+  if (push) {
+    window.history.pushState({}, '', newUrl);
+  } else {
+    window.history.replaceState({}, '', newUrl);
+  }
+}
+
+// Volver a procesar magic links en navegación del historial
+window.addEventListener('popstate', () => {
+  procesarMagicLinks();
+});
