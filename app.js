@@ -1053,6 +1053,8 @@ document.addEventListener('keypress', (e) => {
   });
 
   debugLog('Aplicación inicializada correctamente');
+  // Procesar magic links una vez que los elementos del DOM existen
+  try { procesarMagicLinks(); } catch (e) { /* noop */ }
 }
 
 // Inicializar cuando el DOM esté completamente cargado
@@ -1120,9 +1122,11 @@ function procesarMagicLinks() {
     if (raw) {
       // Normalizar claves: quitar acentos y minúsculas
       const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-      const map = Object.fromEntries(raw.split(',').map(p => p.split(':')));
+      // Permitir separadores ',' o '%2C' ya decodificados por URLSearchParams
+      const parts = raw.split(',');
+      const map = Object.fromEntries(parts.map(p => p.split(':')));
       const mapNormalized = {};
-      Object.keys(map).forEach((k) => { mapNormalized[normalizeKey(decodeURIComponent(k))] = Number(map[k]); });
+      Object.keys(map).forEach((k) => { mapNormalized[normalizeKey(k)] = Number(map[k]); });
       // Construir estructura temporaria de puntajes
       const orden = ['León','Mono','Labrador','Castor'];
       temperamentosOrdenados = orden.map((animal, idx) => ({
@@ -1135,7 +1139,8 @@ function procesarMagicLinks() {
       if (welcomeScreen) welcomeScreen.style.display = 'none';
       if (testContent) testContent.style.display = 'none';
       if (resultDiv) resultDiv.style.display = 'block';
-      preguntasAleatorias = []; // para evitar cálculos de absolutos
+      // Asegurar estructura mínima para render (aunque no haya preguntas)
+      preguntasAleatorias = temperamentos.flatMap((t, idx) => [{ grupoIdx: idx }]);
       mostrarResultadoPrincipal();
       configurarEventListenersResultados();
       // Seleccionar detalle si viene en URL
@@ -1148,12 +1153,7 @@ function procesarMagicLinks() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', procesarMagicLinks);
-// Garantizar procesamiento también tras la inicialización
-document.addEventListener('DOMContentLoaded', () => {
-  // Si ya se inicializó la app, procesar posibles magic links inmediatamente
-  try { procesarMagicLinks(); } catch (e) { /* noop */ }
-});
+// (El procesamiento primario se ejecuta al final de inicializarApp)
 
 // Helpers para construir/actualizar URLs de resultados
 function construirUrlResultados({ detalleAnimal } = {}) {
