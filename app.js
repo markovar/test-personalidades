@@ -485,7 +485,7 @@ function mostrarResultado() {
   
   // Ocultar contenedores del test
   if (questionContainer) {
-    questionContainer.style.display = 'none';
+  questionContainer.style.display = 'none';
   }
   const progressBar = document.getElementById('progress-bar');
   if (progressBar) {
@@ -512,13 +512,15 @@ function mostrarResultado() {
   })).sort((a, b) => b.puntaje - a.puntaje);
   
   debugLog('Temperamentos ordenados:', temperamentosOrdenados);
+  // Total de puntos positivos (excluye "Casi Nunca" que suma 0)
+  const totalPositivos = temperamentosOrdenados.reduce((sum, t) => sum + t.puntaje, 0);
   
   // Mostrar resultado principal
   mostrarResultadoPrincipal();
   
   // Asegurar que el div de resultados sea visible
   if (resultDiv) {
-    resultDiv.style.display = 'block';
+  resultDiv.style.display = 'block';
     // Forzar un reflow para asegurar que el contenido se renderice
     resultDiv.offsetHeight;
   }
@@ -552,19 +554,21 @@ function mostrarResultadoPrincipal() {
       <div class="grafico-container" style="margin: 20px 0;">
         <canvas id="chart-resultados" height="220"></canvas>
       </div>
-
+      
       <!-- Resumen de puntajes -->
       <div class="puntajes-resumen">
         ${temperamentosOrdenados.map((temp, idx) => {
           // Calcular el número real de preguntas CONTESTADAS para este temperamento
           const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === temp.posicion).length;
           const puntajeMaximo = preguntasContestadas * 3; // Máximo posible (escala 0-3)
-          const porcentaje = Math.round((temp.puntaje / puntajeMaximo) * 100);
+          const porcentajeAbsoluto = puntajeMaximo > 0 ? Math.round((temp.puntaje / puntajeMaximo) * 100) : 0;
+          const totalPos = temperamentosOrdenados.reduce((s, t2) => s + t2.puntaje, 0);
+          const porcentajeRelativo = totalPos > 0 ? Math.round((temp.puntaje / totalPos) * 100) : 0;
           return `
             <div class="puntaje-item ${idx === 0 ? 'principal' : ''}" data-temperamento="${idx}">
               <span class="emoji">${descripciones[temp.animal].emoji}</span>
               <span class="nombre">${temp.animal} (${equivalenciasClasicas[temp.animal]})</span>
-              <span class="puntos">${temp.puntaje} pts (${porcentaje}%)</span>
+              <span class="puntos">${temp.puntaje} pts · ${porcentajeAbsoluto}% abs · ${porcentajeRelativo}% rel</span>
               <span class="posicion">${idx === 0 ? '1°' : idx === 1 ? '2°' : idx === 2 ? '3°' : '4°'}</span>
             </div>
           `;
@@ -588,8 +592,8 @@ function mostrarResultadoPrincipal() {
           📄 Descargar PDF
         </button>
         <button id="btn-reiniciar" class="btn-reiniciar">
-          🔄 Hacer test nuevamente
-        </button>
+        🔄 Hacer test nuevamente
+      </button>
       </div>
     </div>
   `;
@@ -599,11 +603,8 @@ function mostrarResultadoPrincipal() {
     const ctx = document.getElementById('chart-resultados');
     if (ctx && window.Chart) {
       const etiquetas = temperamentosOrdenados.map(t => `${descripciones[t.animal].emoji} ${t.animal}`);
-      const datos = temperamentosOrdenados.map((t) => {
-        const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === t.posicion).length;
-        const puntajeMaximo = preguntasContestadas * 3;
-        return Math.round((t.puntaje / puntajeMaximo) * 100);
-      });
+      const totalPos = temperamentosOrdenados.reduce((s, t) => s + t.puntaje, 0);
+      const datos = temperamentosOrdenados.map((t) => totalPos > 0 ? Math.round((t.puntaje / totalPos) * 100) : 0);
 
       // Destruir gráfico previo si existe
       if (window.__chartResultados) {
@@ -722,7 +723,7 @@ function reiniciarTest() {
   // Limpiar contenido de resultados
   if (resultDiv) {
     resultDiv.innerHTML = '';
-    resultDiv.style.display = 'none';
+  resultDiv.style.display = 'none';
   }
   
   // Mostrar pantalla de bienvenida nuevamente
@@ -930,8 +931,8 @@ function actualizarSeleccion() {
   
   // Validar que el valor esté en el rango correcto
   if (esValorValido(valor)) {
-    selectionText.textContent = textos[valor];
-    selectionText.style.color = colores[valor];
+  selectionText.textContent = textos[valor];
+  selectionText.style.color = colores[valor];
   } else {
     // Valor por defecto si hay algún problema
     selectionText.textContent = textos[CONFIG.MIN_VALOR];
@@ -939,7 +940,7 @@ function actualizarSeleccion() {
     answerSlider.value = CONFIG.MIN_VALOR;
   }
   
-  // Actualizar círculos de valores  
+  // Actualizar círculos de valores
   const valorSeguro = esValorValido(valor) ? valor : CONFIG.MIN_VALOR;
   document.querySelectorAll('.value-label').forEach((label, index) => {
     label.classList.toggle('active', index + 1 === valorSeguro);
@@ -950,9 +951,9 @@ function actualizarSeleccion() {
 function clickearValor(valor) {
   // Validar que el valor sea válido antes de asignar
   if (esValorValido(valor)) {
-    answerSlider.value = valor;
-    actualizarSeleccion();
-  }
+  answerSlider.value = valor;
+  actualizarSeleccion();
+}
 }
 
 // Función para inicializar todos los elementos del DOM y event listeners
@@ -981,11 +982,11 @@ function inicializarApp() {
     return;
   }
 
-  // Event listeners
+// Event listeners
   btnStartTest.addEventListener('click', iniciarTest);
-  btnNext.addEventListener('click', responderPregunta);
-  btnPrev.addEventListener('click', preguntaAnterior);
-  answerSlider.addEventListener('input', actualizarSeleccion);
+btnNext.addEventListener('click', responderPregunta);
+btnPrev.addEventListener('click', preguntaAnterior);
+answerSlider.addEventListener('input', actualizarSeleccion);
 
   // Info modal listeners
   if (btnInfo && infoModal && infoModalBody) {
@@ -1010,18 +1011,18 @@ function inicializarApp() {
     });
   }
 
-  // Agregar event listeners a los números
-  document.querySelectorAll('.value-label').forEach((label, index) => {
-    label.addEventListener('click', () => clickearValor(index + 1));
-  });
+// Agregar event listeners a los números
+document.querySelectorAll('.value-label').forEach((label, index) => {
+  label.addEventListener('click', () => clickearValor(index + 1));
+});
 
-  // Permitir avanzar con Enter
-  document.addEventListener('keypress', (e) => {
+// Permitir avanzar con Enter
+document.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       if (welcomeScreen.style.display !== 'none') {
         iniciarTest();
       } else if (testContent.style.display !== 'none' && questionContainer.style.display !== 'none') {
-        responderPregunta();
+    responderPregunta();
       }
     }
   });
