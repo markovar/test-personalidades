@@ -963,6 +963,7 @@ function inicializarApp() {
   testContent = document.getElementById('test-content');
   btnStartTest = document.getElementById('btn-start-test');
   btnInfo = document.getElementById('btn-info');
+  const btnCopyInfoLink = document.getElementById('btn-copy-info-link');
   questionContainer = document.getElementById('question-container');
   currentQuestionEl = document.getElementById('current-question');
   answerSlider = document.getElementById('answer-slider');
@@ -980,7 +981,7 @@ function inicializarApp() {
   if (!welcomeScreen || !testContent || !btnStartTest) {
     console.error('Error: No se pudieron encontrar elementos esenciales del DOM');
     return;
-  }
+}
 
 // Event listeners
   btnStartTest.addEventListener('click', iniciarTest);
@@ -993,6 +994,20 @@ answerSlider.addEventListener('input', actualizarSeleccion);
     btnInfo.addEventListener('click', () => {
       mostrarInfoPersonalidades();
       infoModal.style.display = 'flex';
+    });
+  }
+  // Compartir: copiar magic link a descripciones
+  if (btnCopyInfoLink) {
+    btnCopyInfoLink.addEventListener('click', async () => {
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', 'descriptions');
+      try {
+        await navigator.clipboard.writeText(url.toString());
+        btnCopyInfoLink.textContent = '✅ Enlace copiado';
+        setTimeout(() => (btnCopyInfoLink.textContent = '🔗 Copiar enlace a descripciones'), 2000);
+      } catch (e) {
+        alert(url.toString());
+      }
     });
   }
   if (btnCloseInfo && infoModal) {
@@ -1076,3 +1091,41 @@ function mostrarInfoPersonalidades() {
   }).join('');
   infoModalBody.innerHTML = cards;
 }
+
+// Enrutado por query params (magic links)
+function procesarMagicLinks() {
+  const params = new URLSearchParams(window.location.search);
+  const vista = params.get('view');
+  if (vista === 'descriptions') {
+    // Abrir el modal de descripciones en la bienvenida
+    if (welcomeScreen && infoModal) {
+      welcomeScreen.style.display = 'block';
+      mostrarInfoPersonalidades();
+      infoModal.style.display = 'flex';
+    }
+  }
+  // Puntuaciones compartibles: view=scores&scores=leon:30,mono:12,labrador:5,castor:3
+  if (vista === 'scores') {
+    const raw = params.get('scores');
+    if (raw) {
+      const map = Object.fromEntries(raw.split(',').map(p => p.split(':')));
+      // Construir estructura temporaria de puntajes
+      const orden = ['León','Mono','Labrador','Castor'];
+      temperamentosOrdenados = orden.map((animal, idx) => ({
+        ...temperamentos[idx],
+        animal,
+        puntaje: Number(map[animal.toLowerCase()] || 0),
+        posicion: idx
+      })).sort((a,b)=>b.puntaje-a.puntaje);
+      // Limpiar UI y mostrar resultado sintético
+      if (welcomeScreen) welcomeScreen.style.display = 'none';
+      if (testContent) testContent.style.display = 'none';
+      if (resultDiv) resultDiv.style.display = 'block';
+      preguntasAleatorias = []; // para evitar cálculos de absolutos
+      mostrarResultadoPrincipal();
+      configurarEventListenersResultados();
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', procesarMagicLinks);
