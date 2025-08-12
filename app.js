@@ -322,6 +322,7 @@ let respuestasUsuario = []; // Guardar respuestas para poder navegar hacia atrá
 // Elementos del DOM (se inicializan cuando el DOM esté listo)
 let welcomeScreen, testContent, btnStartTest, questionContainer, currentQuestionEl;
 let answerSlider, btnNext, btnPrev, selectionText, progressFill, progressText, resultDiv;
+let infoModal, btnInfo, btnCloseInfo, infoModalBody;
 
 // Función para logging condicional
 function debugLog(message, ...args) {
@@ -547,6 +548,11 @@ function mostrarResultadoPrincipal() {
       <h2>¡Test Completado!</h2>
       <h3>Tu temperamento dominante es: ${descripciones[ganador.animal].emoji} ${ganador.animal} (${equivalenciasClasicas[ganador.animal]})</h3>
       
+      <!-- Gráfico de barras -->
+      <div class="grafico-container" style="margin: 20px 0;">
+        <canvas id="chart-resultados" height="220"></canvas>
+      </div>
+
       <!-- Resumen de puntajes -->
       <div class="puntajes-resumen">
         ${temperamentosOrdenados.map((temp, idx) => {
@@ -587,6 +593,58 @@ function mostrarResultadoPrincipal() {
       </div>
     </div>
   `;
+
+  // Renderizar gráfico de barras con Chart.js
+  try {
+    const ctx = document.getElementById('chart-resultados');
+    if (ctx && window.Chart) {
+      const etiquetas = temperamentosOrdenados.map(t => `${descripciones[t.animal].emoji} ${t.animal}`);
+      const datos = temperamentosOrdenados.map((t) => {
+        const preguntasContestadas = preguntasAleatorias.filter(p => p.grupoIdx === t.posicion).length;
+        const puntajeMaximo = preguntasContestadas * 3;
+        return Math.round((t.puntaje / puntajeMaximo) * 100);
+      });
+
+      // Destruir gráfico previo si existe
+      if (window.__chartResultados) {
+        window.__chartResultados.destroy();
+      }
+
+      window.__chartResultados = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: etiquetas,
+          datasets: [{
+            label: 'Porcentaje de afinidad',
+            data: datos,
+            backgroundColor: ['#ff9800', '#2196f3', '#4caf50', '#9c27b0'],
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              ticks: { callback: (v) => v + '%' }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.parsed.y}%`
+              }
+            }
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.error('No se pudo renderizar el gráfico:', e);
+  }
 }
 
 function mostrarDetalle(indice) {
@@ -903,6 +961,7 @@ function inicializarApp() {
   welcomeScreen = document.getElementById('welcome-screen');
   testContent = document.getElementById('test-content');
   btnStartTest = document.getElementById('btn-start-test');
+  btnInfo = document.getElementById('btn-info');
   questionContainer = document.getElementById('question-container');
   currentQuestionEl = document.getElementById('current-question');
   answerSlider = document.getElementById('answer-slider');
@@ -912,6 +971,9 @@ function inicializarApp() {
   progressFill = document.getElementById('progress-fill');
   progressText = document.getElementById('progress-text');
   resultDiv = document.getElementById('result');
+  infoModal = document.getElementById('info-modal');
+  btnCloseInfo = document.getElementById('btn-close-info');
+  infoModalBody = document.getElementById('info-modal-body');
 
   // Verificar que todos los elementos existen
   if (!welcomeScreen || !testContent || !btnStartTest) {
@@ -924,6 +986,29 @@ function inicializarApp() {
   btnNext.addEventListener('click', responderPregunta);
   btnPrev.addEventListener('click', preguntaAnterior);
   answerSlider.addEventListener('input', actualizarSeleccion);
+
+  // Info modal listeners
+  if (btnInfo && infoModal && infoModalBody) {
+    btnInfo.addEventListener('click', () => {
+      mostrarInfoPersonalidades();
+      infoModal.style.display = 'flex';
+    });
+  }
+  if (btnCloseInfo && infoModal) {
+    btnCloseInfo.addEventListener('click', () => {
+      infoModal.style.display = 'none';
+      infoModalBody.innerHTML = '';
+    });
+  }
+  // Cerrar modal al hacer click fuera del content
+  if (infoModal) {
+    infoModal.addEventListener('click', (e) => {
+      if (e.target === infoModal) {
+        infoModal.style.display = 'none';
+        if (infoModalBody) infoModalBody.innerHTML = '';
+      }
+    });
+  }
 
   // Agregar event listeners a los números
   document.querySelectorAll('.value-label').forEach((label, index) => {
@@ -946,3 +1031,47 @@ function inicializarApp() {
 
 // Inicializar cuando el DOM esté completamente cargado
 document.addEventListener('DOMContentLoaded', inicializarApp);
+
+// Render de información de personalidades (reutiliza generarDetalleTemperamento)
+function mostrarInfoPersonalidades() {
+  if (!infoModalBody) return;
+  // Construir fichas para cada temperamento en orden definido
+  const cards = temperamentos.map((t, idx) => {
+    const tempOrdenadoFake = {
+      animal: t.animal,
+      puntaje: 0,
+      posicion: idx
+    };
+    // Uso directo de descripciones para contenido
+    const detalle = descripciones[t.animal];
+    return `
+      <div class="detalle-card">
+        <div class="detalle-header">
+          <h3>${detalle.emoji} ${detalle.titulo} (${equivalenciasClasicas[t.animal]})</h3>
+        </div>
+        <div class="descripcion-general"><p>${detalle.descripcion}</p></div>
+        <div class="caracteristicas-grid">
+          <div class="columna">
+            <h4>✅ Características</h4>
+            <ul>${detalle.caracteristicas.map(i => `<li>${i}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <div class="fortalezas-debilidades">
+          <div class="columna fortalezas">
+            <h4>💪 Fortalezas</h4>
+            <ul>${detalle.fortalezas.map(i => `<li>${i}</li>`).join('')}</ul>
+          </div>
+          <div class="columna debilidades">
+            <h4>⚠️ Debilidades</h4>
+            <ul>${detalle.debilidades.map(i => `<li>${i}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <div class="desarrollo">
+          <h4>🎯 Debe aprender/desarrollar</h4>
+          <ul>${detalle.desarrollo.map(i => `<li>${i}</li>`).join('')}</ul>
+        </div>
+      </div>
+    `;
+  }).join('');
+  infoModalBody.innerHTML = cards;
+}

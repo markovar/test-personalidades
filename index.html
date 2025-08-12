@@ -15,6 +15,8 @@
   
   <!-- jsPDF para generar PDFs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
@@ -44,9 +46,14 @@
             🔄 <strong>Puedes navegar</strong> entre preguntas si necesitas cambiar alguna respuesta
           </div>
         </div>
-        <button id="btn-start-test" class="start-btn">
-          🚀 Comenzar Test
-        </button>
+        <div class="welcome-actions">
+          <button id="btn-start-test" class="start-btn">
+            🚀 Comenzar Test
+          </button>
+          <button id="btn-info" class="info-btn" type="button">
+            ℹ️ Ver descripciones
+          </button>
+        </div>
       </div>
     </div>
 
@@ -84,5 +91,14 @@
     <div id="result"></div>
   </div>
   <script src="/test-personalidades/app.js"></script>
+
+  <!-- Modal de información de personalidades -->
+  <div id="info-modal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button id="btn-close-info" class="modal-close" aria-label="Cerrar">✖</button>
+      <h2 class="modal-title">Descripciones de Personalidades</h2>
+      <div id="info-modal-body" class="modal-body"></div>
+    </div>
+  </div>
 </body>
 </html>
