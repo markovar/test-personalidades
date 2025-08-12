@@ -1058,7 +1058,9 @@ document.addEventListener('keypress', (e) => {
 }
 
 // Inicializar cuando el DOM esté completamente cargado
-document.addEventListener('DOMContentLoaded', inicializarApp);
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarApp();
+});
 
 // Render de información de personalidades (reutiliza generarDetalleTemperamento)
 function mostrarInfoPersonalidades() {
