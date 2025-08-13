@@ -140,10 +140,17 @@ h1 {
   display: flex;
   gap: 12px;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
-.welcome-actions .start-btn, .welcome-actions .info-btn {
-  line-height: 1;
+.welcome-actions .start-btn, 
+.welcome-actions .info-btn {
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  box-sizing: border-box;
 }
 .info-btn {
   background: linear-gradient(135deg, #9c27b0, #7b1fa2);
