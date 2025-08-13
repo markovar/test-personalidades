@@ -1,6 +1,7 @@
 // Render de resultados a partir de query params
 (function(){
-  try { window.__resultInit = true; } catch(e) {}
+  document.addEventListener('DOMContentLoaded', () => {
+    try { window.__resultInit = true; } catch(e) {}
   const resultDiv = document.getElementById('result');
   const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const params = new URLSearchParams(window.location.search);
@@ -104,6 +105,7 @@
   }
 
   render();
+  });
 })();
 
 
