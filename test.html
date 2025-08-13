@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Test de Personalidades</title>
+  <meta name="description" content="Realiza el test de temperamentos">
+  <link rel="stylesheet" href="/test-personalidades/style.css?v=20250812-1">
+  <script defer src="/test-personalidades/data.js?v=20250812-1"></script>
+  <script defer src="/test-personalidades/test.js?v=20250812-1"></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Test de Personalidades</h1>
+      <div id="progress-bar"><div id="progress-fill"></div><span id="progress-text">0% completado</span></div>
+      <div id="question-container">
+        <h2 id="current-question"></h2>
+        <div class="scale-container">
+          <div class="slider-container">
+            <input type="range" id="answer-slider" min="1" max="4" value="1" step="1">
+            <div class="slider-track"><div class="slider-fill"></div></div>
+            <div class="slider-values">
+              <span class="value-label" data-value="1">Casi Nunca</span>
+              <span class="value-label" data-value="2">Rara Vez</span>
+              <span class="value-label" data-value="3">Frecuentemente</span>
+              <span class="value-label" data-value="4">Casi Siempre</span>
+            </div>
+          </div>
+          <div class="current-selection"><span id="selection-text">Casi Nunca</span></div>
+          <div class="navigation-buttons">
+            <button id="btn-prev" class="prev-btn">← Anterior</button>
+            <button id="btn-next" class="next-btn">Siguiente →</button>
+          </div>
+        </div>
+      </div>
+      <div id="result" style="display:none;"></div>
+    </div>
+  </body>
+  </html>
+
