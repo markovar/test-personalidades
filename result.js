@@ -86,9 +86,24 @@
       type: 'bar',
       data: {
         labels: temperamentosOrdenados.map(t=>`${descripciones[t.animal].emoji} ${t.animal}`),
-        datasets: [{ label: 'Índice (100 = dominante)', data: datos, backgroundColor: ['#ff9800','#2196f3','#4caf50','#9c27b0'], borderRadius: 6 }]
+        datasets: [{ label: 'Puntuación', data: datos, backgroundColor: ['#ff9800','#2196f3','#4caf50','#9c27b0'], borderRadius: 6 }]
       },
-      options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback:v=>v+'%' } } }, plugins:{ legend:{display:false} } }
+      options: { 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        scales:{ y:{ beginAtZero:true, max:100, ticks:{ callback:v=>'' } } }, 
+        plugins:{ 
+          legend:{display:false},
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const originalScore = temperamentosOrdenados[context.dataIndex].puntaje;
+                return `${originalScore} puntos`;
+              }
+            }
+          }
+        } 
+      }
     });
 
     // Detalle click
