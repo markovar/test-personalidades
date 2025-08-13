@@ -1,5 +1,6 @@
 // Render de resultados a partir de query params
 (function(){
+  try { window.__resultInit = true; } catch(e) {}
   const resultDiv = document.getElementById('result');
   const normalizeKey = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   const params = new URLSearchParams(window.location.search);
@@ -12,8 +13,10 @@
   const pairSep = raw.includes('.') ? '.' : ',';
   const kvSep = raw.includes('-') ? '-' : ':';
   const map = Object.fromEntries(raw.split(pairSep).map(p => {
-    const [k,v] = p.split(kvSep);
-    return [normalizeKey(k), Number(v)];
+    const parts = p.split(kvSep);
+    const k = parts[0];
+    const v = parts.slice(1).join(kvSep); // por si falta separador
+    return [normalizeKey(k), Number(v || 0)];
   }));
   const orden = ['León','Mono','Labrador','Castor'];
   const temperamentosOrdenados = orden.map((animal, idx) => ({
