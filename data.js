@@ -126,7 +126,7 @@ const temperamentos = [
       "¿Me siento mal si algo no queda perfecto?",
       "¿Soy muy duro conmigo cuando cometo errores?",
       "¿Prefiero hacer las cosas despacio pero bien hechas?",
-      "¿Dificulto mostrar lo que siento?",
+      "¿Me cuesta mostrar lo que siento?",
       "¿Parezco frío o seco con otras personas?",
       "¿Me molestan los espacios desordenados o ruidosos?",
       "¿Guardo rencor cuando alguien rompe una regla importante?",
